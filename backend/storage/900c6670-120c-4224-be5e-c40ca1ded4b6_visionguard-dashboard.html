@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VisionGuard AI – Industrial Quality Inspection</title>
+<style>
+  :root{
+    --bg:#0B1220; --card:#111A2E; --border:#1E2A44; --muted:#94A3B8;
+    --blue:#2F6BFF; --green:#22C55E; --orange:#F59E0B; --red:#EF4444; --text:#E5EAF5;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,sans-serif;font-size:14px;overflow:hidden}
+  .app{display:grid;grid-template-columns:240px 1fr;height:100vh;width:100vw}
+
+  /* Sidebar */
+  .sidebar{background:#0D1527;border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px 12px;overflow-y:auto}
+  .logo{display:flex;gap:10px;align-items:center;padding:4px 8px 20px}
+  .logo .mark{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,#2F6BFF,#1AA3FF);display:grid;place-items:center;font-weight:700}
+  .logo b{display:block;font-size:15px;letter-spacing:.5px}
+  .logo small{color:var(--muted);font-size:10.5px}
+  .nav a{display:flex;align-items:center;gap:12px;height:44px;padding:0 14px;border-radius:10px;color:#C3CCE0;text-decoration:none;margin-bottom:4px;font-size:14px;cursor:pointer;transition:.15s}
+  .nav a:hover{background:#16213B}
+  .nav a.active{background:var(--blue);color:#fff}
+  .nav a i{font-style:normal;width:18px;text-align:center;opacity:.9}
+  .sysstatus{margin-top:auto;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px}
+  .sysstatus h4{font-size:13px;margin-bottom:8px}
+  .sysstatus div{display:flex;align-items:center;gap:8px;font-size:12px;color:#C3CCE0;padding:3px 0}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;box-shadow:0 0 6px var(--green)}
+  .ver{text-align:center;color:var(--muted);font-size:11px;margin-top:10px}
+
+  /* Right side */
+  .right{display:flex;flex-direction:column;min-width:0;height:100vh}
+  .topbar{height:64px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid var(--border);background:#0D1527}
+  .chips{display:flex;gap:10px;flex-wrap:wrap}
+  .chip{display:flex;align-items:center;gap:7px;padding:6px 12px;border-radius:8px;background:#0F2A22;border:1px solid #1B4D3A;color:#7EE2A8;font-size:12px}
+  .chip.blue{background:#0F1E3F;border-color:#1E3A7A;color:#8DB1FF}
+  .chip .dot{width:6px;height:6px}
+  .userbox{display:flex;align-items:center;gap:16px}
+  .bell{position:relative;font-size:18px}
+  .bell span{position:absolute;top:-6px;right:-8px;background:var(--red);color:#fff;border-radius:10px;font-size:10px;padding:1px 5px}
+  .avatar{width:34px;height:34px;border-radius:50%;background:var(--blue);display:grid;place-items:center;font-weight:600}
+  .uname{line-height:1.2}.uname small{display:block;color:var(--muted);font-size:11px}
+
+  main{flex:1;overflow-y:auto;padding:20px}
+  .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;flex-wrap:wrap}
+  .header h1{font-size:22px;font-weight:600;display:flex;align-items:center;gap:12px}
+  .header p{color:var(--muted);font-size:13px;margin-top:4px}
+  .live-badge{font-size:11px;font-weight:600;background:#0F2A22;border:1px solid #1B4D3A;color:#4ADE80;padding:3px 10px;border-radius:20px;display:flex;align-items:center;gap:6px}
+  .controls{display:flex;gap:10px;align-items:center}
+  .btn{height:40px;padding:0 18px;border-radius:8px;border:1px solid var(--border);background:#1A2540;color:#fff;font-size:13px;cursor:pointer}
+  .btn.primary{background:var(--blue);border-color:var(--blue)}
+  .btn.stop{background:var(--red);border-color:var(--red);font-weight:600}
+  select.btn{background:#111A2E;min-width:150px}
+
+  .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;box-shadow:0 4px 18px rgba(0,0,0,.25)}
+  .card h3{font-size:15px;font-weight:600;margin-bottom:12px}
+  .card h3 span{color:var(--muted);font-weight:400}
+  .c7{grid-column:span 7}.c5{grid-column:span 5}.c12{grid-column:span 12}
+
+  /* Video */
+  .video{position:relative;aspect-ratio:16/9;border-radius:12px;overflow:hidden;border:1px solid var(--border);
+    background:
+      radial-gradient(ellipse at 30% 40%,#7b8189 0%,transparent 45%),
+      radial-gradient(ellipse at 70% 60%,#5e656d 0%,transparent 50%),
+      linear-gradient(135deg,#2a2f36,#0d1014);filter:none}
+  .video .media{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.05)}
+  .video::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 2px,transparent 2px 4px);pointer-events:none}
+  .vtag{position:absolute;z-index:3;font-size:12px}
+  .vtl{top:12px;left:14px;display:flex;gap:8px;align-items:center;font-weight:600}
+  .vtr{top:12px;right:14px;color:#ddd}
+  .vbl{bottom:12px;left:14px;color:#ccc}
+  .vbr{bottom:10px;right:12px;display:flex;gap:8px}
+  .vbr button{width:30px;height:30px;border-radius:8px;border:none;background:rgba(20,26,40,.8);color:#fff;cursor:pointer}
+  .rec{width:9px;height:9px;border-radius:50%;background:var(--red);animation:pulse 1.2s infinite}
+  @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(239,68,68,.6)}50%{opacity:.6;box-shadow:0 0 0 6px rgba(239,68,68,0)}}
+  .box{position:absolute;z-index:2;border:2px solid;transition:all .6s}
+  .box b{position:absolute;top:-22px;left:-2px;padding:2px 8px;font-size:11.5px;font-weight:700;white-space:nowrap;color:#fff}
+  .box.red{border-color:#EF4444}.box.red b{background:#EF4444}
+  .box.orange{border-color:#F59E0B}.box.orange b{background:#F59E0B}
+  .box.green{border-color:#22C55E}.box.green b{background:#22C55E}
+
+  /* KPI */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+  .kpi{padding:14px}
+  .kicon{width:36px;height:36px;border-radius:9px;display:grid;place-items:center;margin-bottom:10px;font-size:16px}
+  .kpi .val{font-size:26px;font-weight:700;line-height:1.1}
+  .kpi .lbl{color:var(--muted);font-size:12px;margin:4px 0 6px}
+  .up{color:#4ADE80;font-size:12px;font-weight:600}.down{color:#F87171;font-size:12px;font-weight:600}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .chartbox{height:220px;position:relative}
+  .chartbox svg{width:100%;height:100%}
+  .legend{display:flex;flex-direction:column;gap:9px;font-size:12px;justify-content:center}
+  .legend div{display:flex;align-items:center;gap:8px}
+  .legend i{width:8px;height:8px;border-radius:50%}
+  .legend span{margin-left:auto;color:#C3CCE0}
+  .donutwrap{display:flex;align-items:center;gap:12px;height:220px}
+  .donutwrap svg{width:150px;height:150px;flex:none}
+  .legend2{display:flex;gap:16px;justify-content:center;font-size:12px;color:#C3CCE0;margin-bottom:4px}
+  .legend2 i{display:inline-block;width:20px;height:8px;border-radius:3px;margin-right:6px}
+
+  /* gauges */
+  .gauges{display:flex;justify-content:space-around;flex-wrap:wrap;gap:10px}
+  .gauge{text-align:center;position:relative;width:110px}
+  .gauge svg{width:100px;height:100px;transform:rotate(-90deg)}
+  .gauge .gv{position:absolute;top:0;left:0;width:100px;height:100px;margin:0 auto;right:0;display:grid;place-items:center;font-size:17px;font-weight:700}
+  .gauge small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+
+  /* Recent list */
+  .rowx{display:grid;grid-template-columns:50px 90px 56px 1fr auto 14px;gap:10px;align-items:center;height:48px;padding:0 10px;background:#0E1730;border-radius:8px;margin-bottom:8px;font-size:12.5px}
+  .thumb{width:48px;height:34px;border-radius:5px;background:linear-gradient(135deg,#59616b,#232830)}
+  .pill{padding:4px 0;text-align:center;border-radius:5px;font-weight:700;font-size:11.5px;color:#fff}
+  .p-red{background:#EF4444}.p-orange{background:#F59E0B}.p-dark{background:#B91C1C}
+  .cpill{padding:4px 0;text-align:center;border-radius:5px;font-weight:600;background:#3A1B27;color:#FBBF77}
+  .link{color:#5C9BFF;font-size:12px;cursor:pointer}
+
+  /* Feed */
+  .feed{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px}
+  .fc{flex:none;width:190px;height:112px;border-radius:8px;border:2px solid;position:relative;
+      background:linear-gradient(135deg,#6b727b,#252a31);animation:slide .5s}
+  .fc.red{border-color:#EF4444}.fc.orange{border-color:#F59E0B}.fc.green{border-color:#22C55E}
+  .fc b{position:absolute;top:0;left:0;font-size:10.5px;padding:2px 7px;color:#fff}
+  .fc.red b{background:#EF4444}.fc.orange b{background:#F59E0B}.fc.green b{background:#22C55E}
+  .fc small{position:absolute;bottom:5px;left:8px;font-size:11px;color:#eee}
+  @keyframes slide{from{transform:translateX(-30px);opacity:0}to{transform:none;opacity:1}}
+  .feedtitle{display:flex;align-items:center;gap:8px}
+
+  @media (max-width:1280px){.c7,.c5{grid-column:span 12}}
+  @media (max-width:860px){.app{grid-template-columns:1fr}.sidebar{display:none}.kpis{grid-template-columns:1fr 1fr}.two{grid-template-columns:1fr}.chips{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo"><div class="mark">◈</div><div><b>VISIONGUARD AI</b><small>Industrial Quality Inspection</small></div></div>
+    <nav class="nav">
+      <a class="active"><i>▦</i>Dashboard</a>
+      <a><i>◉</i>Live Inspection</a>
+      <a><i>▣</i>Image Inspection</a>
+      <a><i>▶</i>Video Inspection</a>
+      <a><i>↺</i>History</a>
+      <a><i>▤</i>Analytics</a>
+      <a><i>⬡</i>Model Registry</a>
+      <a><i>▥</i>Products &amp; Lines</a>
+      <a><i>☺</i>Users</a>
+      <a><i>⚙</i>Settings</a>
+    </nav>
+    <div class="sysstatus" style="margin-top:auto">
+      <h4>System Status</h4>
+      <div><span class="dot"></span>API Server Online</div>
+      <div><span class="dot"></span>AI Model Loaded</div>
+      <div><span class="dot"></span>Database Connected</div>
+      <div><span class="dot"></span>Storage Ready</div>
+      <div><span class="dot"></span>WebSocket Connected</div>
+    </div>
+    <div class="ver">v1.0.0</div>
+  </aside>
+
+  <!-- RIGHT -->
+  <div class="right">
+    <header class="topbar">
+      <div class="chips">
+        <div class="chip"><span class="dot"></span>Camera Connected</div>
+        <div class="chip blue">Model: YOLOv8 (v1.0)</div>
+        <div class="chip blue">FPS: <span id="fpsChip">28</span></div>
+        <div class="chip"><span class="dot"></span>Status: Inspecting</div>
+      </div>
+      <div class="userbox">
+        <div class="bell">🔔<span>3</span></div>
+        <div>☾</div>
+        <div class="avatar">C</div>
+        <div class="uname">Chandrajyot<small>Administrator</small></div>
+      </div>
+    </header>
+
+    <main>
+      <div class="header">
+        <div>
+          <h1>Live Stream Quality Inspection <span class="live-badge"><span class="dot"></span>LIVE</span></h1>
+          <p>AI-powered real-time defect detection and quality monitoring</p>
+        </div>
+        <div class="controls">
+          <button class="btn primary">📷 Camera</button>
+          <button class="btn">Video File</button>
+          <select class="btn"><option>Production Line A</option><option>Production Line B</option></select>
+          <button class="btn stop" id="stopBtn">■ Stop Inspection</button>
+        </div>
+      </div>
+
+      <div class="grid">
+        <!-- VIDEO -->
+        <div class="c7">
+          <div class="video" id="video">
+            <!-- 👉 Apni real image/video yahan lagao: <img class="media" src="engine.jpg"> ya <video class="media" src="demo.mp4" autoplay muted loop></video> -->
+            <div class="vtag vtl"><span class="rec"></span>LIVE <span style="color:#bbb;font-weight:400">• <span id="fpsLive">28</span> FPS</span></div>
+            <div class="vtag vtr" id="clock">2026-10-10 02:11:32</div>
+            <div class="box red"    style="left:15%;top:27%;width:25%;height:34%"><b>SCRATCH 64%</b></div>
+            <div class="box orange" style="left:60%;top:23%;width:20%;height:30%"><b>DENT 78%</b></div>
+            <div class="box green"  style="left:30%;top:60%;width:26%;height:34%"><b>OK 98%</b></div>
+            <div class="vtag vbl">1920 × 1080 &nbsp;|&nbsp; Inference: <span id="inf">14</span> ms</div>
+            <div class="vtag vbr"><button title="Screenshot">📷</button><button title="Pause">❚❚</button><button title="Fullscreen">⛶</button></div>
+          </div>
+        </div>
+
+        <!-- KPIs + charts -->
+        <div class="c5">
+          <div class="kpis">
+            <div class="card kpi"><div class="kicon" style="background:#12296B;color:#6FA0FF">▣</div><div class="val" data-n="1248">0</div><div class="lbl">Products Inspected</div><div class="up">▲ +12%</div></div>
+            <div class="card kpi"><div class="kicon" style="background:#4A1620;color:#F87171">⚠</div><div class="val" data-n="87">0</div><div class="lbl">Defective Products</div><div class="down">▼ +3%</div></div>
+            <div class="card kpi"><div class="kicon" style="background:#0F3A26;color:#4ADE80">%</div><div class="val">6.97%</div><div class="lbl">Defect Rate</div><div class="up">▲ -2.1%</div></div>
+            <div class="card kpi"><div class="kicon" style="background:#0F3A26;color:#4ADE80">↗</div><div class="val">93.03%</div><div class="lbl">First Pass Yield</div><div class="up">▲ +2.1%</div></div>
+          </div>
+          <div class="two">
+            <div class="card"><h3>Defect Distribution</h3>
+              <div class="donutwrap">
+                <svg viewBox="0 0 150 150" id="donut"></svg>
+                <div class="legend" id="legend"></div>
+              </div>
+            </div>
+            <div class="card"><h3 style="display:flex;justify-content:space-between">Inspection Trend <span style="font-size:11px;border:1px solid var(--border);padding:3px 8px;border-radius:6px">Last 24 Hours ▾</span></h3>
+              <div class="legend2"><span><i style="background:#3B82F6"></i>Total Inspections</span><span><i style="background:#F43F5E"></i>Defects</span></div>
+              <div class="chartbox" style="height:190px"><svg id="trend" viewBox="0 0 400 190" preserveAspectRatio="none"></svg></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Model performance -->
+        <div class="c7 card">
+          <h3>Model Performance <span>(Current Session)</span></h3>
+          <div class="gauges" id="gauges"></div>
+        </div>
+
+        <!-- Recent detections -->
+        <div class="c5 card">
+          <h3 style="display:flex;justify-content:space-between">Recent Detections <span class="link">View All</span></h3>
+          <div id="recent"></div>
+        </div>
+
+        <!-- Feed -->
+        <div class="c12 card">
+          <h3 class="feedtitle"><span class="rec"></span>Live Detection Feed</h3>
+          <div class="feed" id="feed"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+/* ---------- DATA (yahan apni API ka data lagana: fetch('/api/stats') etc.) ---------- */
+const defects=[
+  {n:"Scratch",c:42,p:"48.3%",col:"#EF4444"},
+  {n:"Dent",c:20,p:"23.0%",col:"#F59E0B"},
+  {n:"Crack",c:15,p:"17.2%",col:"#16A34A"},
+  {n:"Contamination",c:8,p:"9.2%",col:"#38BDF8"},
+  {n:"Other",c:2,p:"2.3%",col:"#818CF8"}
+];
+const total=defects.reduce((a,d)=>a+d.c,0);
+const gauges=[
+  {v:96,t:"96%",l:"Precision",c:"#22C55E"},{v:92,t:"92%",l:"Recall",c:"#22C55E"},
+  {v:94,t:"94%",l:"mAP@0.5",c:"#22C55E"},{v:30,t:"28 ms",l:"Latency",c:"#475A80"},{v:70,t:"28",l:"FPS",c:"#38A0FF"}
+];
+const recent=[
+  {t:"SCRATCH",cls:"p-red",cf:"64%",time:"02:11:30",line:"Line A"},
+  {t:"DENT",cls:"p-orange",cf:"78%",time:"02:11:28",line:"Line A"},
+  {t:"CRACK",cls:"p-dark",cf:"82%",time:"02:11:25",line:"Line B"}
+];
+const trendTotal=[50,85,95,110,118,108,102,110,112,118,122,125,130];
+const trendDef  =[10,22,18,20,18,24,20,18,22,26,24,20,22];
+
+/* ---------- Donut ---------- */
+(function(){
+  const svg=document.getElementById('donut'),r=52,C=2*Math.PI*r;let off=0,html='';
+  defects.forEach(d=>{const len=C*d.c/total;
+    html+=`<circle cx="75" cy="75" r="${r}" fill="none" stroke="${d.col}" stroke-width="20" stroke-dasharray="${len-1.5} ${C-len+1.5}" stroke-dashoffset="${-off}" transform="rotate(-90 75 75)"/>`;off+=len;});
+  html+=`<text x="75" y="75" text-anchor="middle" fill="#fff" font-size="26" font-weight="700">${total}</text><text x="75" y="93" text-anchor="middle" fill="#94A3B8" font-size="11">Total</text>`;
+  svg.innerHTML=html;
+  document.getElementById('legend').innerHTML=defects.map(d=>`<div><i style="background:${d.col}"></i>${d.n}<span>${d.c} (${d.p})</span></div>`).join('');
+})();
+
+/* ---------- Trend (inline SVG, no library -> never empty) ---------- */
+(function(){
+  const W=400,H=190,pl=28,pb=22,pt=8,max=150;
+  const x=i=>pl+i*(W-pl-6)/(trendTotal.length-1), y=v=>H-pb-(v/max)*(H-pb-pt);
+  let h='';
+  [0,50,100,150].forEach(g=>{h+=`<line x1="${pl}" x2="${W}" y1="${y(g)}" y2="${y(g)}" stroke="#223055" stroke-dasharray="3 4"/><text x="0" y="${y(g)+3}" fill="#94A3B8" font-size="9">${g}</text>`});
+  ['00:00','04:00','08:00','12:00','16:00','20:00'].forEach((t,i)=>{h+=`<text x="${pl+i*(W-pl-6)/5-10}" y="${H-6}" fill="#94A3B8" font-size="9">${t}</text>`});
+  const line=a=>a.map((v,i)=>`${i?'L':'M'}${x(i)},${y(v)}`).join(' ');
+  const area=(a,c)=>`<path d="${line(a)} L${x(a.length-1)},${H-pb} L${x(0)},${H-pb} Z" fill="${c}" opacity=".18"/>`;
+  h+=area(trendTotal,'#3B82F6')+area(trendDef,'#F43F5E');
+  h+=`<path d="${line(trendTotal)}" fill="none" stroke="#3B82F6" stroke-width="2"/><path d="${line(trendDef)}" fill="none" stroke="#F43F5E" stroke-width="2"/>`;
+  trendTotal.forEach((v,i)=>h+=`<circle cx="${x(i)}" cy="${y(v)}" r="2.5" fill="#3B82F6"/>`);
+  trendDef.forEach((v,i)=>h+=`<circle cx="${x(i)}" cy="${y(v)}" r="2.5" fill="#F43F5E"/>`);
+  document.getElementById('trend').innerHTML=h;
+})();
+
+/* ---------- Gauges ---------- */
+document.getElementById('gauges').innerHTML=gauges.map(g=>{
+  const r=42,C=2*Math.PI*r,len=C*g.v/100;
+  return `<div class="gauge"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="${r}" fill="none" stroke="#1E2A44" stroke-width="8"/>
+  <circle cx="50" cy="50" r="${r}" fill="none" stroke="${g.c}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${len} ${C}"/></svg>
+  <div class="gv">${g.t}</div><small>${g.l}</small></div>`}).join('');
+
+/* ---------- Recent ---------- */
+document.getElementById('recent').innerHTML=recent.map(r=>`<div class="rowx"><div class="thumb"></div><div class="pill ${r.cls}">${r.t}</div><div class="cpill">${r.cf}</div><div>${r.time}</div><div style="color:${r.line=='Line B'?'#FBBF24':'#C3CCE0'}">${r.line}</div><div>›</div></div>`).join('');
+
+/* ---------- Live feed (simulated; replace with WebSocket) ---------- */
+const kinds=[["SCRATCH","red"],["DENT","orange"],["CRACK","red"],["OK","green"]];
+function addCard(){
+  const [n,c]=kinds[Math.floor(Math.random()*kinds.length)];
+  const conf=60+Math.floor(Math.random()*39);
+  const d=new Date();const t=d.toTimeString().slice(0,8);
+  const el=document.createElement('div');el.className='fc '+c;
+  el.innerHTML=`<b>${n} ${conf}%</b><small>${t}</small>`;
+  const f=document.getElementById('feed');f.prepend(el);
+  while(f.children.length>12)f.lastChild.remove();
+}
+for(let i=0;i<6;i++)addCard();
+setInterval(addCard,3500);
+
+/* ---------- Clock, counters, live numbers ---------- */
+setInterval(()=>{const d=new Date();
+  document.getElementById('clock').textContent=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+' '+d.toTimeString().slice(0,8);
+  document.getElementById('inf').textContent=12+Math.floor(Math.random()*5);
+  const f=26+Math.floor(Math.random()*5);
+  document.getElementById('fpsLive').textContent=f;document.getElementById('fpsChip').textContent=f;
+},1000);
+document.querySelectorAll('[data-n]').forEach(el=>{
+  const target=+el.dataset.n;let cur=0;const step=Math.ceil(target/50);
+  const t=setInterval(()=>{cur=Math.min(target,cur+step);el.textContent=cur.toLocaleString();if(cur>=target)clearInterval(t)},20);
+});
+document.getElementById('stopBtn').onclick=function(){
+  const on=this.textContent.includes('Stop');
+  this.textContent=on?'▶ Start Inspection':'■ Stop Inspection';
+  this.style.background=on?'#22C55E':'#EF4444';this.style.borderColor=this.style.background;
+};
+</script>
+</body>
+</html>

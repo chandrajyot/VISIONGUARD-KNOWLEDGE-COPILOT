@@ -1,0 +1,28 @@
+# Dependencies & Environment
+node_modules/
+backend/venv/
+backend/env/
+backend/.env
+
+# Build Output & Cache
+frontend/dist/
+frontend/dist-ssr/
+*.local
+.cache/
+.pytest_cache/
+__pycache__/
+*.pyc
+*.pyo
+
+# Databases & Storage
+backend/*.db
+backend/*.sqlite3
+backend/storage/documents/
+backend/storage/*.pdf
+backend/storage/*.docx
+
+# IDE & Logs
+.vscode/
+.idea/
+*.log
+.DS_Store
